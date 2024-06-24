@@ -1,119 +1,115 @@
 import streamlit as st
 import pandas as pd
+import requests
+import altair as alt
 
+##create first columns for title and image
+col1, col2 = st.columns([3,1])
 
-st.title("📊 Data evaluation app")
-
-st.write(
-    "We are so glad to see you here. ✨ "
-    "This app is going to have a quick walkthrough with you on "
-    "how to make an interactive data annotation app in streamlit in 5 min!"
-)
-
-st.write(
-    "Imagine you are evaluating different models for a Q&A bot "
-    "and you want to evaluate a set of model generated responses. "
-    "You have collected some user data. "
-    "Here is a sample question and response set."
-)
-
-data = {
-    "Questions": [
-        "Who invented the internet?",
-        "What causes the Northern Lights?",
-        "Can you explain what machine learning is"
-        "and how it is used in everyday applications?",
-        "How do penguins fly?",
-    ],
-    "Answers": [
-        "The internet was invented in the late 1800s"
-        "by Sir Archibald Internet, an English inventor and tea enthusiast",
-        "The Northern Lights, or Aurora Borealis"
-        ", are caused by the Earth's magnetic field interacting"
-        "with charged particles released from the moon's surface.",
-        "Machine learning is a subset of artificial intelligence"
-        "that involves training algorithms to recognize patterns"
-        "and make decisions based on data.",
-        " Penguins are unique among birds because they can fly underwater. "
-        "Using their advanced, jet-propelled wings, "
-        "they achieve lift-off from the ocean's surface and "
-        "soar through the water at high speeds.",
-    ],
-}
-
-df = pd.DataFrame(data)
-
-st.write(df)
-
-st.write(
-    "Now I want to evaluate the responses from my model. "
-    "One way to achieve this is to use the very powerful `st.data_editor` feature. "
-    "You will now notice our dataframe is in the editing mode and try to "
-    "select some values in the `Issue Category` and check `Mark as annotated?` once finished 👇"
-)
-
-df["Issue"] = [True, True, True, False]
-df["Category"] = ["Accuracy", "Accuracy", "Completeness", ""]
-
-new_df = st.data_editor(
-    df,
-    column_config={
-        "Questions": st.column_config.TextColumn(width="medium", disabled=True),
-        "Answers": st.column_config.TextColumn(width="medium", disabled=True),
-        "Issue": st.column_config.CheckboxColumn("Mark as annotated?", default=False),
-        "Category": st.column_config.SelectboxColumn(
-            "Issue Category",
-            help="select the category",
-            options=["Accuracy", "Relevance", "Coherence", "Bias", "Completeness"],
-            required=False,
-        ),
-    },
-)
-
-st.write(
-    "You will notice that we changed our dataframe and added new data. "
-    "Now it is time to visualize what we have annotated!"
-)
-
-st.divider()
-
-st.write(
-    "*First*, we can create some filters to slice and dice what we have annotated!"
-)
-
-col1, col2 = st.columns([1, 1])
 with col1:
-    issue_filter = st.selectbox("Issues or Non-issues", options=new_df.Issue.unique())
+    st.title('Pokemon Explorer!')
+
 with col2:
-    category_filter = st.selectbox(
-        "Choose a category",
-        options=new_df[new_df["Issue"] == issue_filter].Category.unique(),
+    st.image('https://github.com/Charlie-martinzzz/Pokeball/blob/main/Pokemon-Pokeball.png?raw=true')
+
+
+## create slider to select pokemon
+pokemon_number = st.slider("Choose your Pokemon!", 1 , 151)
+
+## get data
+pokemon_url = f"https://pokeapi.co/api/v2/pokemon/{pokemon_number}"
+response = requests.get(pokemon_url).json()
+
+pokemon_name = response['name'].capitalize()
+pokemon_height = response['height'] * 10
+total_moves = len(response['moves'])
+pokemon_weight = response['weight'] / 10
+image_url = response['sprites']['front_default']
+moves = [move['move']['name'].capitalize() for move in response['moves']]
+sound = response['cries']['latest']
+
+## create next columns for info and image
+col3, col4 = st.columns([3,2])
+
+## display pokemon name and info
+with col3:
+    st.title(f"{pokemon_name} !")
+    st.write(f"{pokemon_name} is {pokemon_height}cm tall and weighs {pokemon_weight} kg!")
+    st.write(f"{pokemon_name} has {total_moves} potential moves!")
+
+## show pokemon image
+with col4:
+    st.markdown(f'<img src="{image_url}" style="max-width: 300px; width: 100%; height: auto;">', unsafe_allow_html=True)
+
+
+
+## create selectbox to show all pokemon moves
+moves_list = st.selectbox("Select a move!" , moves)
+
+st.write("How does your pokemon sound?")
+st.audio(sound)
+
+st.header("Compare your Pokemon!")
+st.write("Click on the buttons below to add your pokemon to a chart")
+
+
+# Initialize height comparison list in session state
+if 'height_comparison_list' not in st.session_state:
+    st.session_state.height_comparison_list = []
+
+# Initialize weight comparison list in session state
+if 'weight_comparison_list' not in st.session_state:
+    st.session_state.weight_comparison_list = []
+
+
+## create columns for buttons
+col5, col6 = st.columns([2,1])
+
+## button for height
+with col5:
+    if st.button("Add to height comparison"):
+        st.session_state.height_comparison_list.append((pokemon_name, pokemon_height))
+    
+    # Reset height comparison 
+    if st.button("Reset height comparison"):
+        st.session_state.height_comparison_list = []
+
+## button for weight
+with col6:
+    if st.button("Add to weight comparison"):
+        st.session_state.weight_comparison_list.append((pokemon_name, pokemon_weight))   
+
+    # Reset weight comparison 
+    if st.button("Reset weight comparison"):
+        st.session_state.weight_comparison_list = []
+
+## add white space for readability
+st.write("")
+st.write("")
+
+# Display height in a bar chart
+if st.session_state.height_comparison_list:
+    height_comparison_df = pd.DataFrame(st.session_state.height_comparison_list, columns=['Name', 'Height'])
+    chart1 = alt.Chart(height_comparison_df).mark_bar().encode(
+        x='Name',
+        y=alt.Y('Height', axis=alt.Axis(title='Height (cm)')),  
+    ).properties(
+        title='Pokemon Height Comparison',  
+        width=600,
+        height=400
     )
+    st.altair_chart(chart1)
 
-st.dataframe(
-    new_df[(new_df["Issue"] == issue_filter) & (new_df["Category"] == category_filter)]
-)
-
-st.markdown("")
-st.write(
-    "*Next*, we can visualize our data quickly using `st.metrics` and `st.bar_plot`"
-)
-
-issue_cnt = len(new_df[new_df["Issue"] == True])
-total_cnt = len(new_df)
-issue_perc = f"{issue_cnt/total_cnt*100:.0f}%"
-
-col1, col2 = st.columns([1, 1])
-with col1:
-    st.metric("Number of responses", issue_cnt)
-with col2:
-    st.metric("Annotation Progress", issue_perc)
-
-df_plot = new_df[new_df["Category"] != ""].Category.value_counts().reset_index()
-
-st.bar_chart(df_plot, x="Category", y="count")
-
-st.write(
-    "Here we are at the end of getting started with streamlit! Happy Streamlit-ing! :balloon:"
-)
+# Display weight in a bar chart
+if st.session_state.weight_comparison_list:
+    weight_comparison_df = pd.DataFrame(st.session_state.weight_comparison_list, columns=['Name', 'Weight'])
+    chart2 = alt.Chart(weight_comparison_df).mark_bar().encode(
+        x='Name',
+        y=alt.Y('Weight', axis=alt.Axis(title='Weight (kg)')),
+    ).properties(
+        title='Pokemon Weight Comparison',  
+        width=600,
+        height=400
+    )
+    st.altair_chart(chart2)
 
