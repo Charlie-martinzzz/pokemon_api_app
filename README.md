@@ -1,4 +1,4 @@
-# 📊 Data evaluation template
+# Pokemon API app!
 
 A simple streamlit app displaying various information uisng the poke-api.
 
