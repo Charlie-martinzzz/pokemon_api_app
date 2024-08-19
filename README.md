@@ -1,20 +1,10 @@
 # 📊 Data evaluation template
 
-A simple Streamlit app showing how to evaluate and annotate data, using dataframes
-and charts. 
+A simple streamlit app displaying various information uisng the poke-api.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://data-evaluation-template.streamlit.app/)
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://pokemon-api-app.streamlit.app/)
 
-### How to run it on your own machine
+This project served as an introductory experience to both working with API's and working with streamlit.
 
-1. Install the requirements
-
-   ```
-   $ pip install -r requirements.txt
-   ```
-
-2. Run the app
-
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+The app has the capability to provide information about any of the original pokemon with a slider, including sounds, height and weight.
+There is also two interactive charts for comparing pokemon stats that can be built/reset live.
